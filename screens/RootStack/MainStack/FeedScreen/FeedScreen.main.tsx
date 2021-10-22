@@ -50,12 +50,34 @@ export default function FeedScreen({ navigation }: Props) {
     // TODO: Put your logic for flipping the user's "interested"
     // status here, and call this method from your "like"
     // button on each Social card.
+    let addInterested: String[] = [...social.interested];
+    if (addInterested.includes(currentUserId)) {
+      addInterested.splice(social.interested.indexOf(currentUserId), 1);
+    } else {
+      addInterested = [...addInterested, currentUserId];
+    }
+    firebase.firestore().collection("socials").doc(social.id).update({
+      interested: addInterested,
+    });
   };
 
   const deleteSocial = (social: SocialModel) => {
     // TODO: Put your logic for deleting a social here,
     // and call this method from your "delete" button
     // on each Social card that was created by this user.
+    if (currentUserId == social.authorID) {
+      firebase
+        .firestore()
+        .collection("socials")
+        .doc(social.id)
+        .delete()
+        .then(() => {
+          console.log("Document successfully deleted");
+        })
+        .catch((error) => {
+          console.error("Error removing document: ", error);
+        });
+    }
   };
 
   const renderSocial = ({ item }: { item: SocialModel }) => {
@@ -64,6 +86,13 @@ export default function FeedScreen({ navigation }: Props) {
         social: item,
       });
     };
+
+    var includes = false;
+    var numLikes = 0;
+    if (item.interested) {
+      includes = item.interested.includes(currentUserId);
+      numLikes = item.interested.length;
+    }
 
     return (
       <Card onPress={onPress} style={{ margin: 16 }}>
@@ -79,6 +108,16 @@ export default function FeedScreen({ navigation }: Props) {
         {/* TODO: Add a like/interested button & delete soccial button. See Card.Actions
               in React Native Paper for UI/UX inspiration.
               https://callstack.github.io/react-native-paper/card-actions.html */}
+
+        <Card.Actions>
+          <Button
+            icon={includes ? "heart" : "heart-outline"}
+            onPress={() => toggleInterested(item)}
+          >
+            {includes ? "Liked" : "Like"} {`(${numLikes})`}
+          </Button>
+          <Button onPress={() => deleteSocial(item)}>Delete</Button>
+        </Card.Actions>
       </Card>
     );
   };
@@ -101,6 +140,22 @@ export default function FeedScreen({ navigation }: Props) {
     );
   };
 
+  const ListEmptyComponent = () => {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text style={[styles.body, { color: "#808080" }]}>
+          Press the plus in the top right to create a new post!
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <>
       <Bar />
@@ -113,7 +168,7 @@ export default function FeedScreen({ navigation }: Props) {
           // by reading the documentation :)
           // https://reactnative.dev/docs/flatlist#listemptycomponent
 
-          // ListEmptyComponent={ListEmptyComponent}
+          ListEmptyComponent={ListEmptyComponent}
         />
       </View>
     </>

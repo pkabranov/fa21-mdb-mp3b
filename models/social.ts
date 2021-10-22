@@ -8,4 +8,6 @@ export interface SocialModel {
   // TODO: You may need to add attributes here
   // to implement your desired functionality.
   // The staff solutions add two attributes.
+  authorID: String;
+  interested: String[];
 }
